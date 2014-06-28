@@ -12,12 +12,32 @@ import java.util.concurrent.locks.Condition;
  */
 public class SimpleSemaphore {
     /**
+     * Define a ReentrantLock to protect the critical section.
+     */
+    // TODO - you fill in here
+	private ReentrantLock lock;
+    /**
+     * Define a ConditionObject to wait while the number of
+     * permits is 0.
+     */
+    // TODO - you fill in here
+	private Condition condition;
+    /**
+     * Define a count of the number of available permits.
+     */
+    // TODO - you fill in here.  Make sure that this data member will
+    // ensure its values aren't cached by multiple Threads..
+	private volatile int permits;
+    /**
      * Constructor initialize the data members.  
      */
     public SimpleSemaphore (int permits,
                             boolean fair)
     { 
         // TODO - you fill in here
+    	this.permits = permits;
+    	lock = new ReentrantLock(fair);
+    	condition = lock.newCondition();
     }
 
     /**
@@ -26,6 +46,15 @@ public class SimpleSemaphore {
      */
     public void acquire() throws InterruptedException {
         // TODO - you fill in here
+    	lock.lockInterruptibly();
+    	try{
+    		while(permits == 0){
+    			condition.await();
+    		}
+    		permits = permits - 1;
+    	}finally{
+    		lock.unlock();
+    	}
     }
 
     /**
@@ -34,6 +63,15 @@ public class SimpleSemaphore {
      */
     public void acquireUninterruptibly() {
         // TODO - you fill in here
+    	lock.lock();
+    	try{
+    		while(permits == 0){
+    			condition.awaitUninterruptibly();
+    		}
+    		permits = permits - 1;
+    	}finally{
+    		lock.unlock();
+    	}
     }
 
     /**
@@ -41,21 +79,28 @@ public class SimpleSemaphore {
      */
     void release() {
         // TODO - you fill in here
+    	lock.lock();
+    	try{
+    		permits = permits + 1;
+    		condition.signalAll();
+    	}finally{
+    		lock.unlock();
+    	}
     }
-
+    
     /**
-     * Define a ReentrantLock to protect the critical section.
+     * Return the number of permits available.
      */
-    // TODO - you fill in here
-
-    /**
-     * Define a ConditionObject to wait while the number of
-     * permits is 0.
-     */
-    // TODO - you fill in here
-
-    /**
-     * Define a count of the number of available permits.
-     */
-    // TODO - you fill in here
+    public int availablePermits(){
+    	// TODO - you fill in here
+    	int result = 0;
+    	lock.lock();
+    	try{
+    		result = permits;
+    	}finally{
+    		lock.unlock();
+    	}
+    	return result; // You will change this value. 
+    }
 }
+
